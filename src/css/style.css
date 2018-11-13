@@ -1,0 +1,32 @@
+body{
+    background-color: #000;
+    text-align: center;
+}
+
+.ts{
+	-webkit-transition: all 0.3s ease;
+    -moz-transition: 	all 0.3s ease;
+    -o-transition:		all 0.3s ease;
+    transition:			all 0.3s ease;
+}
+
+.canvas{
+	border: 1px solid #000;
+    cursor: pointer;
+}
+
+.snapShot, .snapShot:visited{
+    background-color: #000;
+    color: #fff;
+    padding: 10px 20px;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+.snapShot:hover, .snapShot:focus{
+	background-color: #09A723;
+}
