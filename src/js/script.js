@@ -4,7 +4,7 @@
 // Config
 let pixelSize = 1; // Pixels
 let gridSize = "600"; // Pixels
-let stepInterval = 0.1; // Milliseconds
+let stepInterval = 0.001; // Milliseconds
 
 // Colors
 let colors = [
@@ -86,12 +86,13 @@ function rgb2hsl(rgbArr){
 class Brush {
     constructor(color, size, x, y) {
 		this.color = color;
-		this.sizeX = size;
-		this.sizeY = size;
-		this.x = x;
-		this.y = y;
+        this.sizeX = size;
+        this.sizeY = size;
+        this.x = x;
+        this.y = y;
 
-		this.setColor(color);
+        this.setColor(color);
+        this.sampleCurrentColor();
     }
 
     paint(){
@@ -157,7 +158,21 @@ class Brush {
     		pixelSample.data[2]
     	];
     	let pixelSampleHSL = rgb2hsl(pixelSample);
+        this.nextColor = 'hsl('+pixelSampleHSL[0]+','+pixelSampleHSL[1]+'%,'+(pixelSampleHSL[2] + 1)+'%)';
     	return pixelSampleHSL;
+    }
+
+    paintStep(direction, step){
+        // Paint last dot with brighter color
+        this.setColor(this.nextColor);
+        this.paint();
+
+        // Paint
+        this.step(direction, step);
+        this.sampleCurrentColor();
+        this.setColor(colors[1]);
+        this.paint();
+        return;
     }
 }
 
@@ -166,47 +181,13 @@ class Painter extends Brush {
 	constructor(color, size, x, y) {
 		super(color, size, x, y);
 	}
-
-	// Not in use
-	drawCross(sizeX, sizeY){
-		this.setSize(sizeX, sizeY);
-		this.paint();
-		this.step('up', 1);
-		this.paint();
-		this.step('down', 2);
-		this.paint();
-		this.step('down', 1);
-		this.paint();
-		this.step('up', 2);
-		this.step('right', 1);
-		this.paint();
-		this.step('left', 2);
-		this.paint();
-		this.step('right', 1);
-		this.step('down', 2);
-		
-		return this.getCurrentPos();
-	}
 }
 
 // Create the painter object
 let painter = new Painter(colors[1], pixelSize, gridCenter, gridCenter);
 
-// Random Paint
-let currentSampleColor = painter.sampleCurrentColor();
-
+// Randomize steps interval
 setInterval(function(){
-	// Paint last dot with brighter color
-	nextColor = 'hsl('+currentSampleColor[0]+','+currentSampleColor[1]+'%,'+(currentSampleColor[2] + 1)+'%)';
-	painter.setColor(nextColor);
-	painter.paint();
-
-	// Randomize
-	randDirection = Math.ceil(Math.random() * (5 - 0) - 1);
-
-	// Paint
-	painter.step(directions[randDirection], 1);
-	currentSampleColor = painter.sampleCurrentColor();
-	painter.setColor(colors[1]);
-	painter.paint();
+    randDirection = Math.ceil(Math.random() * (5 - 0) - 1);
+    painter.paintStep(directions[randDirection], 1);
 }, stepInterval);
