@@ -101,7 +101,6 @@ class Brush {
     }
 
     setColor(color){
-    	this.color = color;
     	ctx.fillStyle = color;
     	return;
     }
@@ -170,7 +169,7 @@ class Brush {
         // Paint
         this.step(direction, step);
         this.sampleCurrentColor();
-        this.setColor(colors[1]);
+        this.setColor(this.color);
         this.paint();
         return;
     }
@@ -187,7 +186,30 @@ class Painter extends Brush {
 let painter = new Painter(colors[1], pixelSize, gridCenter, gridCenter);
 
 // Randomize steps interval
-setInterval(function(){
+let paintingInterval = setInterval(function(){
     randDirection = Math.ceil(Math.random() * (5 - 0) - 1);
     painter.paintStep(directions[randDirection], 1);
 }, stepInterval);
+
+// Create new painter on click
+c.addEventListener("mousedown", addPainter, false);
+
+function addPainter(event){
+	let mouseX = event.x;
+	let mouseY = event.y;
+	mouseX -= c.offsetLeft;
+	mouseY -= c.offsetTop;
+
+	// Create rand color for painter
+	let randRed = Math.ceil(Math.random() * (255 - 0) - 0);
+	let randGreen = Math.ceil(Math.random() * (255 - 0) - 0);
+	let randBlue = Math.ceil(Math.random() * (255 - 0) - 0);
+	let randRGB = `rgb(${randRed},${randGreen},${randBlue})`;
+
+	let painterChild = new Painter(randRGB, pixelSize, mouseX, mouseY);
+
+	let intervalRand = setInterval(function(){
+		childDirection = Math.ceil(Math.random() * (5 - 0) - 1);
+		painterChild.paintStep(directions[childDirection], 1);
+	}, stepInterval);
+}
