@@ -3,8 +3,9 @@
 
 // Config
 let pixelSize = 1; // Pixels
-let gridSize = "600"; // Pixels
-let stepInterval = 0.001; // Milliseconds
+let gridSizeX = "1280"; // Pixels
+let gridSizeY = "720"; // Pixels
+let stepInterval = 0.0001; // Milliseconds
 
 // Colors
 let colors = [
@@ -19,15 +20,16 @@ let colors = [
 directions = ['up', 'down', 'left', 'right'];
 
 // Grid
-let gridCenter = gridSize/2;
-let x = gridCenter;
-let y = gridCenter;
+let gridCenterX = gridSizeX/2;
+let gridCenterY = gridSizeY/2;
+let x = gridCenterX;
+let y = gridCenterY;
 let c = document.getElementById("grid");
 let ctx = c.getContext("2d");
-ctx.canvas.width  = gridSize;
-ctx.canvas.height = gridSize;
+ctx.canvas.width  = gridSizeX;
+ctx.canvas.height = gridSizeY;
 ctx.fillStyle = colors[0];
-ctx.fillRect(0,0,gridSize,gridSize);
+ctx.fillRect(0,0,gridSizeX,gridSizeY);
 
 // COLOR PICK
 function getPixelColor(x, y) {
@@ -112,7 +114,7 @@ class Brush {
     }
 
     setPos(x, y){
-    	if((x > (gridSize - this.sizeX) || x < 0) || (y > (gridSize - this.sizeY) || y < 0)){
+    	if((x > (gridSizeX - this.sizeX) || x < 0) || (y > (gridSizeY - this.sizeY) || y < 0)){
     		return;
     	}
 
@@ -183,7 +185,7 @@ class Painter extends Brush {
 }
 
 // Create the painter object
-let painter = new Painter(colors[1], pixelSize, gridCenter, gridCenter);
+let painter = new Painter(colors[1], pixelSize, gridCenterX, gridCenterY);
 
 // Randomize steps interval
 let paintingInterval = setInterval(function(){
@@ -195,10 +197,12 @@ let paintingInterval = setInterval(function(){
 c.addEventListener("mousedown", addPainter, false);
 
 function addPainter(event){
-	let mouseX = event.x;
-	let mouseY = event.y;
-	mouseX -= c.offsetLeft;
-	mouseY -= c.offsetTop;
+	let mouseX = 0;
+	let mouseY = 0;
+
+	var rect = c.getBoundingClientRect();
+	mouseX = event.clientX - Math.ceil(rect.left),
+	mouseY = event.clientY - Math.ceil(rect.top)
 
 	// Create rand color for painter
 	let randRed = Math.ceil(Math.random() * (255 - 0) - 0);
@@ -206,7 +210,7 @@ function addPainter(event){
 	let randBlue = Math.ceil(Math.random() * (255 - 0) - 0);
 	let randRGB = `rgb(${randRed},${randGreen},${randBlue})`;
 
-	let painterChild = new Painter(randRGB, pixelSize, mouseX, mouseY);
+	let painterChild = new Painter(randRGB, pixelSize, mouseX+pixelSize, mouseY);
 
 	let intervalRand = setInterval(function(){
 		childDirection = Math.ceil(Math.random() * (5 - 0) - 1);
