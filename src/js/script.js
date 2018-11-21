@@ -1,42 +1,50 @@
 // painterBot v0.2 by DodgeCode
 // This is an experimental artwork paint by randomness
 
+// ######
 // Config
-let pixelSize = 1; // Pixels
-let gridSizeX = "1280"; // Pixels
-let gridSizeY = "720"; // Pixels
-let stepInterval = 0.0001; // Milliseconds
+// ######
 
 // Colors
-let colors = [
-	"#044A56", // Background
-	"#D83640", // Selected
-	"#262439",
-	"#16596B",
-	"#45B0A6"
-];
-
-// Directions
-directions = ['up', 'down', 'left', 'right'];
+let colors = {
+	'grid': 'rgb(4,74,86)',
+	'painter': 'rgb(216,54,64)',
+	'hunter': 'rgb(242,255,0)',
+	'wall': 'rgb(76,59,0)',
+	'dot': 'rgb(38,36,57)',
+	'dot2': 'rgb(22,89,107)',
+	'dot3': 'rgb(69,176,166)'
+};
 
 // Grid
-let gridCenterX = gridSizeX/2;
-let gridCenterY = gridSizeY/2;
-let x = gridCenterX;
-let y = gridCenterY;
+let grid = {
+	'pixelSize': 4, // Pixels
+	'gridSizeX': "1280", // Pixels
+	'gridSizeY': "720", // Pixels
+	'painterSpeed': 0.0001, // Milliseconds
+	'hunterSpeed': 50, // Milliseconds
+	'directions': ['up', 'down', 'left', 'right']
+}
+
+// Targets list
+let = targetsList = [];
+
+// Create canvas
+let gridCenterX = grid.gridSizeX/2;
+let gridCenterY = grid.gridSizeY/2;
 let c = document.getElementById("grid");
 let ctx = c.getContext("2d");
-ctx.canvas.width  = gridSizeX;
-ctx.canvas.height = gridSizeY;
-ctx.fillStyle = colors[0];
-ctx.fillRect(0,0,gridSizeX,gridSizeY);
+ctx.canvas.width  = grid.gridSizeX;
+ctx.canvas.height = grid.gridSizeY;
+ctx.fillStyle = colors.grid;
+ctx.fillRect(0,0,grid.gridSizeX,grid.gridSizeY);
+
 
 // COLOR PICK
 function getPixelColor(x, y) {
     var pxData = ctx.getImageData(x,y,1,1);
     return("rgb("+pxData.data[0]+","+pxData.data[1]+","+pxData.data[2]+")");
 }
-var pixelCurrentColor = getPixelColor(x, y);
 
 // SNAPSHOT
 function download() {
@@ -92,12 +100,14 @@ class Brush {
         this.sizeY = size;
         this.x = x;
         this.y = y;
-
         this.setColor(color);
         this.sampleCurrentColor();
     }
 
-    paint(){
+    paint(color=null){
+    	if(color !== null){
+    		ctx.fillStyle = color;
+    	}
     	ctx.fillRect(this.x, this.y, this.sizeX, this.sizeY);
         return;
     }
@@ -114,7 +124,7 @@ class Brush {
     }
 
     setPos(x, y){
-    	if((x > (gridSizeX - this.sizeX) || x < 0) || (y > (gridSizeY - this.sizeY) || y < 0)){
+    	if((x > (grid.gridSizeX - this.sizeX) || x < 0) || (y > (grid.gridSizeY - this.sizeY) || y < 0)){
     		return;
     	}
 
@@ -151,6 +161,14 @@ class Brush {
     	return {'x':this.x, 'y':this.y};
     }
 
+    getX(){
+    	return this.x;
+    }
+
+    getY(){
+    	return this.y;
+    }
+
     sampleCurrentColor(){
     	let pixelSample = ctx.getImageData(this.x, this.y, 1, 1);
     	pixelSample = [
@@ -158,9 +176,17 @@ class Brush {
     		pixelSample.data[1],
     		pixelSample.data[2]
     	];
-    	let pixelSampleHSL = rgb2hsl(pixelSample);
-        this.nextColor = 'hsl('+pixelSampleHSL[0]+','+pixelSampleHSL[1]+'%,'+(pixelSampleHSL[2] + 1)+'%)';
-    	return pixelSampleHSL;
+
+    	let pixelSampleHSLArray = rgb2hsl(pixelSample);
+    	let pixelSampleHSL = 'hsl('+pixelSampleHSLArray[0]+','+pixelSampleHSLArray[1]+'%,'+(pixelSampleHSLArray[2])+'%)';
+    	let pixelSampleHSLBrighter = 'hsl('+pixelSampleHSLArray[0]+','+pixelSampleHSLArray[1]+'%,'+(pixelSampleHSLArray[2] + 1)+'%)';
+    	let pixelSampleRGB = 'rgb('+pixelSample[0]+','+pixelSample[1]+','+pixelSample[2]+')';
+    	
+    	if(pixelSampleRGB != colors.hunter){
+	        this.nextColor = pixelSampleHSLBrighter;
+    	}
+
+    	return pixelSampleHSLArray;
     }
 
     paintStep(direction, step){
@@ -175,34 +201,200 @@ class Brush {
         this.paint();
         return;
     }
+
+    wipeStep(direction, steps){
+        // Paint last dot with grid color
+        this.setColor(colors.grid);
+        this.paint();
+
+        // Step
+        this.step(direction, steps);
+
+        // Paint
+        this.setColor(this.color);
+        this.paint();
+        return;
+    }
 }
 
 // Painter
 class Painter extends Brush {
 	constructor(color, size, x, y) {
 		super(color, size, x, y);
+        this.health = 'alive';
+		targetsList.push(this);
+	}
+
+	randWalk(steps){
+		this.walkInterval = setInterval(
+			() => this.randStep(steps)
+		, grid.hunterSpeed);
+		return;
+	}
+
+	randStep(steps){
+		this.randDirection = Math.ceil(Math.random() * (5 - 0) - 1);
+		this.paintStep(grid.directions[this.randDirection], steps);
+		return;
+	}
+
+	stopWalking(){
+		clearInterval(this.walkInterval);
+		return;
+	}
+
+	getHealth(){
+		return this.health;
+	}
+
+	die(){
+		this.stopWalking();
+		this.paint(colors.grid);
+		targetsList.shift();
+        this.health = 'dead';
+		return;
+	}
+}
+
+// Hunter
+class Hunter extends Brush {
+	constructor(color, size, x, y) {
+		super(color, size, x, y);
+	}
+
+	stepCloser(target, steps){
+		if(target.getHealth() === 'dead'){
+			return this.searchForTarget();
+		}
+
+		let distanceX = Math.abs(target.getX() - this.getX());
+		let distanceY = Math.abs(target.getY() - this.getY());
+
+    	if(target.getX() < this.getX() && target.getY() < this.getY()){ // If top left
+    		if(distanceX >= distanceY){
+    			this.wipeStep('left', steps);
+    		} else {
+    			this.wipeStep('up', steps);
+    		}
+    	} else if(target.getX() > this.getX() && target.getY() < this.getY()) { // If top right
+    		if(distanceX >= distanceY){
+    			this.wipeStep('right', steps);
+    		} else {
+    			this.wipeStep('up', steps);
+    		}
+    	} else if(target.getX() < this.getX() && target.getY() > this.getY()) { // If bottom left
+    		if(distanceX >= distanceY){
+    			this.wipeStep('left', steps);
+    		} else {
+    			this.wipeStep('down', steps);
+    		}
+		} else if(target.getX() > this.getX() && target.getY() > this.getY()) { // If bottom right
+			if(distanceX >= distanceY){
+				this.wipeStep('right', steps);
+			} else {
+				this.wipeStep('down', steps);
+			}
+		} else if(distanceX == 0 && distanceY == 0){ // BOOM!
+			if(target != undefined){
+				return this.caught(target);
+			}
+		}
+		return;
+    }
+
+	chase(target, steps){
+		this.chaseInterval = setInterval(
+			() => this.stepCloser(target, steps)
+		, grid.hunterSpeed);
+		return;
+	}
+
+	stopChase(){
+		clearInterval(this.chaseInterval);
+		return;
+	}
+
+
+	caught(target){
+		this.stopChase();
+		this.terminateTarget(target);
+		this.searchForTarget();
+		return;
+	}
+
+	searchForTarget(){
+		// Find new target
+		let newTarget = targetsList[0];
+		
+		// Chase target if exist
+		if(newTarget !== undefined){
+			this.stopChase();
+			clearInterval(this.wait);
+			this.wait = null;
+			this.chase(newTarget, 1);
+		} else {
+			this.waitForPrey();
+		}
+		return;
+	}
+
+	waitForPrey(){
+		if(typeof this.wait !== 'number'){
+			this.wait = setInterval(
+				() => this.searchForTarget()
+			, 500);
+		}
+		return;
+	}
+
+	terminateTarget(target){
+		// Kill target
+		target.die();
+
+		// Search for new target
+		this.searchForTarget();
+		return;
+	}
+
+	getTargetHealth(target){
+		return target.getHealth();
+	}
+
+	die(){
+		this.stopChase();
+		this.paint(colors.grid);
+		return;
 	}
 }
 
 // Create the painter object
-let painter = new Painter(colors[1], pixelSize, gridCenterX, gridCenterY);
-
-// Randomize steps interval
-let paintingInterval = setInterval(function(){
-    randDirection = Math.ceil(Math.random() * (5 - 0) - 1);
-    painter.paintStep(directions[randDirection], 1);
-}, stepInterval);
+let painter = new Painter(colors.painter, grid.pixelSize, gridCenterX, gridCenterY);
 
 // Create new painter on click
-c.addEventListener("mousedown", addPainter, false);
+c.addEventListener("mousedown", mouseClick, false);
 
+// On mouse click
+function mouseClick(event){
+	if(window.event.ctrlKey){ // CTRL + CLICK
+		addHunter(event);
+	} else { // CLICK ONLY
+		addPainter(event);
+	}
+}
+
+// Add Painter
 function addPainter(event){
 	let mouseX = 0;
 	let mouseY = 0;
 
-	var rect = c.getBoundingClientRect();
+	// Get mouse position
+	let rect = c.getBoundingClientRect();
 	mouseX = event.clientX - Math.ceil(rect.left),
 	mouseY = event.clientY - Math.ceil(rect.top)
+
+	// Round to grid
+	mouseX = Math.ceil(mouseX / grid.pixelSize) * grid.pixelSize;
+	mouseY = Math.ceil(mouseY / grid.pixelSize) * grid.pixelSize;
 
 	// Create rand color for painter
 	let randRed = Math.ceil(Math.random() * (255 - 0) - 0);
@@ -210,10 +402,42 @@ function addPainter(event){
 	let randBlue = Math.ceil(Math.random() * (255 - 0) - 0);
 	let randRGB = `rgb(${randRed},${randGreen},${randBlue})`;
 
-	let painterChild = new Painter(randRGB, pixelSize, mouseX+pixelSize, mouseY);
+	// New painter
+	let painter = new Painter(randRGB, grid.pixelSize, mouseX+grid.pixelSize, mouseY);
 
-	let intervalRand = setInterval(function(){
-		childDirection = Math.ceil(Math.random() * (5 - 0) - 1);
-		painterChild.paintStep(directions[childDirection], 1);
-	}, stepInterval);
+	painter.randWalk(1);
+	return;
 }
+
+// Add Hunter
+function addHunter(event){
+	let mouseX = 0;
+	let mouseY = 0;
+
+	// Get mouse position
+	let rect = c.getBoundingClientRect();
+	mouseX = event.clientX - Math.ceil(rect.left);
+	mouseY = event.clientY - Math.ceil(rect.top);
+
+	// Round to grid
+	mouseX = Math.ceil(mouseX / grid.pixelSize) * grid.pixelSize;
+	mouseY = Math.ceil(mouseY / grid.pixelSize) * grid.pixelSize;
+
+	// New Hunter
+	let hunter = new Hunter(colors.hunter, grid.pixelSize, gridCenterX, gridCenterY);
+
+	// Set position and color
+	hunter.setPos(mouseX, mouseY);
+
+	// Find target for hunter
+	let newTarget = targetsList[0];
+	
+	// Chase target if exist
+	if(newTarget !== undefined){
+		hunter.chase(newTarget, 1);
+	}
+	return;
+}
+
+// Start with one painter walking
+painter.randWalk(1);
