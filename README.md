@@ -3,9 +3,11 @@ A randomize painting, every run is a new artwork paint.
 <br>
 This is an experimental project.
 <br>
-Update: You can add new 'painterBots' on mouse click.
+Update 22.11.18: Now you can add Hunter with CTRL + Mouse-Click.
 <br>
-Demo: [Link](https://rawcdn.githack.com/DodgeCode/painterBot/6e904fb75b570e36b256e8e215752d1d4aedad76/src/index.html)
+Update 16.11.18: You can add new 'painterBots' on mouse click.
+<br>
+Demo: [Link](https://rawcdn.githack.com/DodgeCode/painterBot/d91fc48d0ff2930c963e543468e192c69280c1e3/src/index.html)
 <br>
 ![painterBot artwork](screenshots/painterBot-v0.2.jpg)
 <br>
