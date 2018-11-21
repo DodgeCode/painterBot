@@ -182,7 +182,7 @@ class Brush {
     	let pixelSampleHSLBrighter = 'hsl('+pixelSampleHSLArray[0]+','+pixelSampleHSLArray[1]+'%,'+(pixelSampleHSLArray[2] + 1)+'%)';
     	let pixelSampleRGB = 'rgb('+pixelSample[0]+','+pixelSample[1]+','+pixelSample[2]+')';
     	
-    	if(pixelSampleRGB != colors.hunter){
+    	if(pixelSampleRGB !== colors.hunter && pixelSampleRGB !== colors.painter){
 	        this.nextColor = pixelSampleHSLBrighter;
     	}
 
@@ -403,7 +403,7 @@ function addPainter(event){
 	let randRGB = `rgb(${randRed},${randGreen},${randBlue})`;
 
 	// New painter
-	let painter = new Painter(randRGB, grid.pixelSize, mouseX+grid.pixelSize, mouseY);
+	let painter = new Painter(colors.painter, grid.pixelSize, mouseX+grid.pixelSize, mouseY);
 
 	painter.randWalk(1);
 	return;
